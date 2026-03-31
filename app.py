@@ -11,7 +11,8 @@ lang_dict = {
     "English": {
         "title": "🔭 K-PROTOCOL: Deterministic Cosmic Localization",
         "subtitle": "**Spatial Geometric Proof: The Deterministic Collapse of the Uncertainty Arc**",
-        "slider": "K-PROTOCOL Calibration Progress (0% = SI Constant 'c', 100% = Absolute Speed 'c_k' & S_loc)",
+        "slider1": "Case 1 Calibration Progress (0% = SI Constant ➔ 100% = Absolute Speed)",
+        "slider2": "Case 2 Calibration Progress (0% = SI Constant ➔ 100% = Absolute Speed)",
         "case1_header": "### 📂 Case 1: GW170817 (3 Detectors - Verification Mode)",
         "case2_header": "### 📂 Case 2: Dark BBH Merger (2 Detectors - Zoom-in Discovery Mode)",
         "graph_title": "Mathematical Convergence (Log10 Time Residual)",
@@ -56,12 +57,13 @@ st.title(t["title"])
 st.markdown(t["subtitle"])
 st.markdown("---")
 
-# 2. 데이터 코어 (비르고 V1 완벽 동기화)
+# ==========================================
+# 2. 데이터 코어 
+# ==========================================
 R = 5
 color_V1, color_L1, color_H1 = "#1ca01c", "#1f77b4", "#d62728" 
 pos_L1, pos_H1, pos_V1 = np.array([-R*0.5, R*0.866, 0]), np.array([-R*0.5, -R*0.866, 0]), np.array([R, 0, 0])
 
-# 논문 원시 데이터 (도달 시간 및 왜곡 지수)
 t_base = {"L1": 22.141220, "H1": 25.160489, "V1": 21.050302}
 T_actual = {"L1": 22.170549, "H1": 25.158686, "V1": 21.076840}
 S_loc = {"L1": 1.007752243, "H1": 1.006347452, "V1": 1.007686733}
@@ -74,15 +76,13 @@ def render_case(header, slider_label, is_case1, key_suffix):
     
     with c1:
         fig3d = go.Figure()
-        # 지구
         u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:30j]
         fig3d.add_trace(go.Surface(x=R*np.cos(u)*np.sin(v), y=R*np.sin(u)*np.sin(v), z=R*np.cos(v), colorscale='Blues', opacity=0.1, showscale=False, hoverinfo='skip'))
         
         target = np.array([120, 80, 60]) if is_case1 else np.array([90, -100, 50])
-        # 타겟과 관측소 간의 초기 오차 벡터 
         errs = {"L1": [50,-30,40], "H1": [-15,-40,-50], "V1": [-30,40,-20]}
         if not is_case1:
-            errs = {"L1": [70, -50, 60], "H1": [-40, -60, -70]} # Case 2용 오차 재설정
+            errs = {"L1": [70, -50, 60], "H1": [-40, -60, -70]} 
             
         starts = {"L1": pos_L1, "H1": pos_H1, "V1": pos_V1}
         colors = {"L1": color_L1, "H1": color_H1, "V1": color_V1}
@@ -93,31 +93,25 @@ def render_case(header, slider_label, is_case1, key_suffix):
 
         for k in show_list:
             end = target + np.array(errs[k]) * (1 - prog)
-            # 💡 시각적 교정: L1(파랑) 벡터는 파선(dashed), H1(빨강)과 V1(초록)은 실선(solid)
+            # 시각적 교정: L1 파선, H1 굵기 얇게
             dash_style = 'dash' if k == "L1" else 'solid'
+            line_width = 2 if k == "H1" else 4
             
-            # 선분 및 끝점 마커 추가
-            fig3d.add_trace(go.Scatter3d(x=[starts[k][0], end[0]], y=[starts[k][1], end[1]], z=[starts[k][2], end[2]], mode='lines+markers', line=dict(color=colors[k], width=4, dash=dash_style), marker=dict(size=[0, marker_size], color=colors[k], symbol='cross'), name=names[k]))
-            # 💡 관측소 명칭 라벨링 복구
+            fig3d.add_trace(go.Scatter3d(x=[starts[k][0], end[0]], y=[starts[k][1], end[1]], z=[starts[k][2], end[2]], mode='lines+markers', line=dict(color=colors[k], width=line_width, dash=dash_style), marker=dict(size=[0, marker_size], color=colors[k], symbol='cross'), name=names[k]))
             fig3d.add_trace(go.Scatter3d(x=[starts[k][0]], y=[starts[k][1]], z=[starts[k][2]], mode='text', text=[k], textposition="bottom center", textfont=dict(color='black', size=13), showlegend=False))
 
-        # 확률의 호 (Case 2 전용)
         if not is_case1 and prog < 1.0:
             cloud_size = 50 * (1 - prog)
             fig3d.add_trace(go.Scatter3d(x=[target[0]], y=[target[1]], z=[target[2]], mode='markers', marker=dict(size=cloud_size, color='red', opacity=0.25), name=t["arc_name"]))
 
-        # 100% 도달 시 정답 좌표 출력
         if prog == 1.0:
             lbl = t["target1_text"] if is_case1 else t["target2_text"]
             fig3d.add_trace(go.Scatter3d(x=[target[0]], y=[target[1]], z=[target[2]], mode='text', text=[lbl], textposition="top left", textfont=dict(color='black', size=13, family="Arial Black"), showlegend=False))
 
-        # 💡 카메라 앵글 디테일 교정 (Case 1은 전역 뷰, Case 2는 줌인 뷰)
         camera_eye = dict(x=1.3, y=-1.5, z=0.8) if is_case1 else dict(x=0.7, y=-0.8, z=0.5)
-
         fig3d.update_layout(scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='rgba(0,0,0,0)', camera=dict(eye=camera_eye)), margin=dict(l=0,r=0,b=0,t=0), height=450, paper_bgcolor='rgba(0,0,0,0)', legend=dict(x=0.0, y=1.0, bgcolor="rgba(255, 255, 255, 0.7)", font=dict(size=11)))
         st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{key_suffix}")
 
-    # --- 2D 로그 오차 그래프 (비르고 V1 완벽 동기화 및 선 스타일 교정) ---
     with c2:
         st.markdown(f"**{t['graph_title']}**")
         x_vals = np.linspace(0, max(prog, 0.01), 100)
@@ -128,11 +122,10 @@ def render_case(header, slider_label, is_case1, key_suffix):
             log_errors = []
             for x in x_vals:
                 cur_S = S_earth + (S_loc[k] - S_earth) * x
-                # 마이크로초 단위의 도달 시간 잔차 계산 (K-PROTOCOL 핵심 수식)
                 val = np.log10(abs((t_base[k] * (cur_S / S_earth)) - T_actual[k]) + EPSILON)
                 log_errors.append(val)
                 
-            # 💡 시각적 교정: L1(파랑)은 파선(dashed), H1(빨강)과 V1(초록)은 실선(solid). H1은 더 가늘게(width 2).
+            # 시각적 교정: L1 파선, H1 굵기 얇게
             dash_style = 'dash' if k == "L1" else 'solid'
             width_style = 2 if k == "H1" else 3
             
@@ -144,14 +137,13 @@ def render_case(header, slider_label, is_case1, key_suffix):
     return prog
 
 # ==========================================
-# 3. 화면 수직 렌더링 (Case 1 ➔ Case 2 ➔ Guide)
+# 3. 화면 수직 렌더링
 # ==========================================
 p1 = render_case(t["case1_header"], t["slider1"], is_case1=True, key_suffix="c1")
 st.markdown("---")
 p2 = render_case(t["case2_header"], t["slider2"], is_case1=False, key_suffix="c2")
 st.markdown("---")
 
-# 하단 상세 학술 가이드 복원
 st.markdown(t["guide_title"])
 st.markdown(t["guide_0"], unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
