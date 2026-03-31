@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 # 1. 페이지 설정
 st.set_page_config(page_title="K-PROTOCOL 3D LIGO Localization", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. 한/영 다국어 딕셔너리 (논문급 상세 가이드 포함)
+# 2. 한/영 다국어 딕셔너리
 lang_dict = {
     "English": {
         "title": "🔭 Deterministic 3D LIGO Localization",
@@ -19,7 +19,8 @@ lang_dict = {
         "v1_vec": "V1 Observation Vector",
         "l1_vec": "L1 Observation Vector",
         "h1_vec": "H1 Observation Vector",
-        "target_text": "✨ NGC 4993 (Zero-Error)",
+        # 실제 천문학 RA, Dec 좌표 적용 (논문 데이터 기준)
+        "target_text": "✨ NGC 4993<br>(RA: 13h 09m 48.08s, Dec: -23° 22' 53.3\")",
         "xaxis_title": "K-PROTOCOL Calibration %",
         "yaxis_title": "Time Residual (Log10 ms)",
         "guide_title": "### 💡 Simulation Guide: The Collapse of Illusion and Restoration of Absoluteness",
@@ -43,7 +44,8 @@ lang_dict = {
         "v1_vec": "V1 관측 벡터",
         "l1_vec": "L1 관측 벡터",
         "h1_vec": "H1 관측 벡터",
-        "target_text": "✨ NGC 4993 (Zero-Error)",
+        # 실제 천문학 RA, Dec 좌표 적용 (논문 데이터 기준)
+        "target_text": "✨ NGC 4993<br>(RA: 13h 09m 48.08s, Dec: -23° 22' 53.3\")",
         "xaxis_title": "K-PROTOCOL 적용률",
         "yaxis_title": "도달 시간 오차 (Log10 ms)",
         "guide_title": "### 💡 시뮬레이션 감상 가이드 : 착시의 붕괴와 절대성의 복원",
@@ -57,7 +59,7 @@ lang_dict = {
     }
 }
 
-# 3. 언어 선택 라디오 버튼 (우측 상단 정렬 느낌으로)
+# 3. 언어 선택 라디오 버튼
 col_lang1, col_lang2 = st.columns([8, 2])
 with col_lang2:
     lang = st.radio("Language / 언어", ["English", "한국어"], horizontal=True, label_visibility="collapsed")
@@ -75,7 +77,7 @@ progress = st.slider(t["slider"], 0.0, 1.0, 0.0, 0.01)
 # 6. 레이아웃 분할
 col1, col2 = st.columns([1.2, 1])
 
-color_V1, color_L1, color_H1 = "#1ca01c", "#1f77b4", "#d62728" # 초록, 파랑, 빨강
+color_V1, color_L1, color_H1 = "#1ca01c", "#1f77b4", "#d62728" 
 
 # ==========================================
 # 🌌 [좌측] 3D 시네마틱 기하학 시뮬레이션 
@@ -84,7 +86,6 @@ with col1:
     st.markdown(t["graph1_title"])
     fig3d = go.Figure()
 
-    # 지구(Earth) 3D 구체
     u = np.linspace(0, 2 * np.pi, 40)
     v = np.linspace(0, np.pi, 40)
     R = 5
@@ -92,12 +93,8 @@ with col1:
     y_earth = R * np.outer(np.sin(u), np.sin(v))
     z_earth = R * np.outer(np.ones(np.size(u)), np.cos(v))
 
-    fig3d.add_trace(go.Surface(
-        x=x_earth, y=y_earth, z=z_earth,
-        colorscale='Blues', opacity=0.2, showscale=False, hoverinfo='skip', name='Earth'
-    ))
+    fig3d.add_trace(go.Surface(x=x_earth, y=y_earth, z=z_earth, colorscale='Blues', opacity=0.2, showscale=False, hoverinfo='skip'))
 
-    # 관측소 위치 및 마커
     pos_V1 = np.array([R, 0, 0])
     pos_L1 = np.array([-R*0.5, R*0.866, 0])
     pos_H1 = np.array([-R*0.5, -R*0.866, 0])
@@ -109,7 +106,6 @@ with col1:
             textfont=dict(color='#333333', size=11), name=name
         ))
 
-    # 심우주 타겟 및 SI 오차 세팅
     target_true = np.array([120, 80, 60])
     err_V1 = np.array([-30, 40, -20]) 
     err_L1 = np.array([50, -30, 40])
@@ -119,10 +115,8 @@ with col1:
     end_L1 = target_true + err_L1 * (1 - progress)
     end_H1 = target_true + err_H1 * (1 - progress)
 
-    # 100% 도달 시 선 끝부분의 잔여 마커(십자가)를 없애서 완벽한 선의 교차만 보여줌
     marker_size = 0 if progress == 1.0 else 4 
 
-    # 관측 레이저 빔 그리기 함수
     def shoot_laser(start, end, color, name):
         fig3d.add_trace(go.Scatter3d(
             x=[start[0], end[0]], y=[start[1], end[1]], z=[start[2], end[2]],
@@ -134,15 +128,16 @@ with col1:
     shoot_laser(pos_L1, end_L1, color_L1, t["l1_vec"])
     shoot_laser(pos_H1, end_H1, color_H1, t["h1_vec"])
 
-    # 🎯 100% 도달 시 정답 텍스트만 허공에 띄움 (도형 제거)
+    # 🎯 100% 도달 시: 실제 천문학 RA, Dec 좌표 텍스트 출력
     if progress == 1.0:
         fig3d.add_trace(go.Scatter3d(
             x=[target_true[0]], y=[target_true[1]], z=[target_true[2]],
             mode='text',
             text=[t["target_text"]], 
-            textposition="middle right", # 선이 모인 곳 바로 우측에 텍스트 배치
-            textfont=dict(color='#d48800', size=15, family="Arial Black"), 
-            name="True Source"
+            textposition="top left", 
+            textfont=dict(color='black', size=13, family="Arial Black"), # 텍스트가 길어졌으므로 사이즈를 13으로 최적화
+            name="True Source",
+            showlegend=False
         ))
 
     fig3d.update_layout(
