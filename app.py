@@ -7,12 +7,12 @@ import plotly.graph_objects as go
 # ==========================================
 st.set_page_config(page_title="K-PROTOCOL Master Localization", layout="wide", initial_sidebar_state="collapsed")
 
-# 다국어 사전 (학술적 뉘앙스와 극도의 상세한 설명 포함)
 lang_dict = {
     "English": {
         "title": "🔭 K-PROTOCOL: Deterministic Cosmic Localization",
         "subtitle": "**Spatial Geometric Proof: The Deterministic Collapse of the Uncertainty Arc**",
-        "slider": "K-PROTOCOL Calibration Progress (0% = SI Constant 'c', 100% = Absolute Speed 'c_k' & S_loc)",
+        "slider1": "Case 1 Calibration Progress (0% = SI Constant ➔ 100% = Absolute Speed)",
+        "slider2": "Case 2 Calibration Progress (0% = SI Constant ➔ 100% = Absolute Speed)",
         "case1_header": "### 📂 Case 1: GW170817 (3 Detectors - Verification Mode)",
         "case2_header": "### 📂 Case 2: Dark BBH Merger (2 Detectors - Zoom-in Discovery Mode)",
         "graph_title": "Mathematical Convergence (Log10 Time Residual)",
@@ -22,15 +22,16 @@ lang_dict = {
         "target2_text": "✨ GW150914 (Absolute Coordinate)<br>RA: 03h 11m 32.2s, Dec: -45° 11' 22.8\"",
         "xaxis": "Calibration Progress", "yaxis": "Time Residual (Log10 ms)",
         "guide_title": "### 📖 In-Depth Scientific Guide: The Restoration of Deterministic Geometry",
-        "guide_0": "**1. [ 0% ] The Fallacy of the SI Constant (The Geometric Illusion)**<br>Modern astrophysics relies on the SI constant for the speed of light ($c$), which is intrinsically calibrated within Earth's average gravitational well. At 0%, you are viewing the universe through this 'bent ruler'. In **Case 1**, the three vectors fail to intersect, generating a 28-square-degree error. In **Case 2** (zoomed in), with only two detectors, standard physics is completely blind, producing a massive 'Probability Arc' (the red cloud) spanning hundreds of square degrees. This represents the absolute limit of modern triangulation methods.",
+        "guide_0": "**1. [ 0% ] The Fallacy of the SI Constant (The Geometric Illusion)**<br>Modern astrophysics relies on the SI constant for the speed of light ($c$), which is intrinsically calibrated within Earth's average gravitational well. At 0%, you are viewing the universe through this 'bent ruler'. In **Case 1**, the three vectors fail to intersect, generating a 28-square-degree error. In **Case 2** (zoomed in), with only two detectors, standard physics is completely blind, producing a massive 'Probability Arc' (the red cloud) spanning hundreds of square degrees.",
         "guide_50": "**2. [ 0% ➔ 99% ] The K-PROTOCOL Calibration (Changing the Lens)**<br>As you move the slider, you are mathematically stripping away Earth's localized gravitational distortion ($S_{loc}$) and replacing it with the Absolute Kinematic Speed of Light ($c_k$). Watch the 3D space: guided by absolute geometric necessity, the disjointed vectors bend and align. Notice the right-side 2D graphs—microsecond residuals that academia dismissed as 'noise' or 'instrumental error' are plummeting exponentially toward true zero.",
-        "guide_100": "**3. [ 100% ] The Zero-Error Singularity (Deterministic Collapse)**<br>At exactly 100%, the vectors strike the absolute astronomical coordinates without a single millimeter of deviation. Crucially, **Case 2 proves that if we correct for the local gravity distortion of each observatory, we do not need a third detector.** The mathematics dictates that the specific distortion ratio at L1 and H1 uniquely identifies the source's location in 3D space. The universe collapses into a deterministic state, proving that the 'probabilistic cosmos' was merely an optical illusion.",
+        "guide_100": "**3. [ 100% ] The Zero-Error Singularity (Deterministic Collapse)**<br>At exactly 100%, the vectors strike the absolute astronomical coordinates without a single millimeter of deviation. Crucially, **Case 2 proves that if we correct for the local gravity distortion of each observatory, we do not need a third detector.** The mathematics dictates that the specific distortion ratio at L1 and H1 uniquely identifies the source's location in 3D space.",
         "success": "🎯 **[Q.E.D. Proof Complete]** Both 3-detector verification and 2-detector discovery successfully collapsed into exact deterministic coordinates."
     },
     "한국어": {
         "title": "🔭 K-PROTOCOL: 결정론적 우주 로컬라이제이션",
         "subtitle": "**공간 기하학적 증명: 확률적 오차 영역(Arc)의 결정론적 붕괴**",
-        "slider": "K-PROTOCOL 보정 진행률 (0% = 기존 SI 상수 광속 c 적용, 100% = 절대 속도 c_k 및 S_loc 적용)",
+        "slider1": "Case 1 보정 진행률 (0% = 기존 SI 체계 ➔ 100% = K-PROTOCOL 절대성 체계)",
+        "slider2": "Case 2 보정 진행률 (0% = 기존 SI 체계 ➔ 100% = K-PROTOCOL 절대성 체계)",
         "case1_header": "### 📂 Case 1: GW170817 (검출기 3개 - 전역 뷰 검증 모드)",
         "case2_header": "### 📂 Case 2: Dark BBH Merger (검출기 2개 - 줌인 발견 모드)",
         "graph_title": "수학적 수렴 (도달 시간 로그 잔차)",
@@ -47,26 +48,18 @@ lang_dict = {
     }
 }
 
-# 상단 언어 선택 라디오 버튼
-col_lang1, col_lang2 = st.columns([8, 2])
-with col_lang2:
+col_l1, col_l2 = st.columns([8, 2])
+with col_l2:
     lang = st.radio("Language / 언어", ["English", "한국어"], horizontal=True, label_visibility="collapsed")
 t = lang_dict[lang]
 
-# 메인 타이틀
 st.markdown("<br>", unsafe_allow_html=True)
 st.title(t["title"])
 st.markdown(t["subtitle"])
 st.markdown("---")
 
 # ==========================================
-# 2. 전역 컨트롤 슬라이더
-# ==========================================
-progress = st.slider(t["slider"], 0.0, 1.0, 0.0, 0.01)
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ==========================================
-# 3. 데이터 및 함수 모듈화 (3D/2D 렌더링)
+# 2. 데이터 및 시각화 코어 함수
 # ==========================================
 R = 5
 color_V1, color_L1, color_H1 = "#1ca01c", "#1f77b4", "#d62728" 
@@ -78,13 +71,14 @@ t_base_L1, t_base_H1 = 22.141220, 25.160489
 T_actual_L1, T_actual_H1 = 22.170549, 25.158686
 S_earth, S_loc_L1, S_loc_H1 = 1.006419562, 1.007752243, 1.006347452
 
-def render_case(header, is_case1):
+def render_case(header, slider_label, is_case1, key_suffix):
     st.markdown(header)
+    
+    # 💡 각 케이스별 독립적인 슬라이더 툴 배치
+    local_progress = st.slider(slider_label, 0.0, 1.0, 0.0, 0.01, key=f"slider_{key_suffix}")
+    
     c1, c2 = st.columns([1.5, 1])
     
-    # ------------------
-    # [좌측] 3D 렌더링
-    # ------------------
     with c1:
         fig3d = go.Figure()
         
@@ -96,29 +90,25 @@ def render_case(header, is_case1):
         err_L1, err_H1 = np.array([50, -30, 40]), np.array([-15, -40, -50])
         err_V1 = np.array([-30, 40, -20])
         
-        marker_size = 0 if progress == 1.0 else 4
+        marker_size = 0 if local_progress == 1.0 else 4
 
         def add_vec(start, end, color, name):
             fig3d.add_trace(go.Scatter3d(x=[start[0], end[0]], y=[start[1], end[1]], z=[start[2], end[2]], mode='lines+markers', line=dict(color=color, width=4), marker=dict(size=[0, marker_size], color=color, symbol='cross'), name=name))
 
-        # 벡터 렌더링
-        add_vec(pos_L1, target + err_L1 * (1 - progress), color_L1, t["l1_vec"])
-        add_vec(pos_H1, target + err_H1 * (1 - progress), color_H1, t["h1_vec"])
+        # 벡터 렌더링 (현재 케이스의 progress만 적용)
+        add_vec(pos_L1, target + err_L1 * (1 - local_progress), color_L1, t["l1_vec"])
+        add_vec(pos_H1, target + err_H1 * (1 - local_progress), color_H1, t["h1_vec"])
         
         if is_case1:
-            add_vec(pos_V1, target + err_V1 * (1 - progress), color_V1, t["v1_vec"])
-            # Case 1 카메라: 전체를 넓게 보는 전역 뷰
-            camera_eye = dict(x=1.3, y=-1.5, z=0.8)
+            add_vec(pos_V1, target + err_V1 * (1 - local_progress), color_V1, t["v1_vec"])
+            camera_eye = dict(x=1.3, y=-1.5, z=0.8) # 전역 뷰
         else:
-            # Case 2: 확률의 호(Arc) 시각화
-            if progress < 1.0:
-                cloud_size = 50 * (1 - progress)
+            if local_progress < 1.0:
+                cloud_size = 50 * (1 - local_progress)
                 fig3d.add_trace(go.Scatter3d(x=[target[0]], y=[target[1]], z=[target[2]], mode='markers', marker=dict(size=cloud_size, color='red', opacity=0.25), name=t["arc_name"]))
-            # 💡 Case 2 카메라: 수축 과정을 박진감 있게 보여주는 Zoom-in 뷰 (기존 1.3 대비 훨씬 가까움)
-            camera_eye = dict(x=0.7, y=-0.8, z=0.5)
+            camera_eye = dict(x=0.7, y=-0.8, z=0.5) # 💡 Case 2 전용 줌인 뷰
 
-        # 100% 도달 시 절대 좌표 텍스트 출력
-        if progress == 1.0:
+        if local_progress == 1.0:
             label = t["target1_text"] if is_case1 else t["target2_text"]
             fig3d.add_trace(go.Scatter3d(
                 x=[target[0]], y=[target[1]], z=[target[2]], mode='text',
@@ -131,16 +121,11 @@ def render_case(header, is_case1):
             margin=dict(l=0, r=0, b=0, t=0), height=450, paper_bgcolor='rgba(0,0,0,0)',
             legend=dict(x=0.0, y=1.0, bgcolor="rgba(255, 255, 255, 0.7)", font=dict(size=11))
         )
-        
-        # 💡 에러 픽스: 고유한 key를 부여하여 DuplicateElementId 충돌 방지
-        st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{is_case1}")
+        st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{key_suffix}")
 
-    # ------------------
-    # [우측] 2D 수학적 잔차 그래프
-    # ------------------
     with c2:
         st.markdown(f"**{t['graph_title']}**")
-        x_vals = np.linspace(0, max(progress, 0.01), 100)
+        x_vals = np.linspace(0, max(local_progress, 0.01), 100)
         log_errors_L1, log_errors_H1 = [], []
         EPSILON = 1e-12
 
@@ -159,21 +144,19 @@ def render_case(header, is_case1):
             height=400, xaxis=dict(range=[0, 1]), yaxis=dict(range=[-12, 1]), 
             margin=dict(l=10, r=10, b=10, t=10), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        
-        # 💡 에러 픽스: 고유한 key를 부여하여 DuplicateElementId 충돌 방지
-        st.plotly_chart(fig2d, use_container_width=True, key=f"2d_plot_{is_case1}")
+        st.plotly_chart(fig2d, use_container_width=True, key=f"2d_plot_{key_suffix}")
+    
+    return local_progress
 
 # ==========================================
-# 4. 화면 수직 렌더링 (Case 1 -> Case 2 -> Guide)
+# 3. 화면 렌더링 (Case 1 ➔ Case 2 ➔ Guide)
 # ==========================================
-render_case(t["case1_header"], is_case1=True)
+p1 = render_case(t["case1_header"], t["slider1"], is_case1=True, key_suffix="c1")
 st.markdown("---")
-render_case(t["case2_header"], is_case1=False)
+p2 = render_case(t["case2_header"], t["slider2"], is_case1=False, key_suffix="c2")
 st.markdown("---")
 
-# ==========================================
-# 5. 하단 상세 학술 가이드 (에러 없이 완벽히 출력됨)
-# ==========================================
+# 하단 상세 학술 가이드
 st.markdown(t["guide_title"])
 st.markdown(t["guide_0"], unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
@@ -182,5 +165,6 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(t["guide_100"], unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-if progress == 1.0:
+# 두 케이스 모두 100%일 때만 최종 성공 메시지 출력
+if p1 == 1.0 and p2 == 1.0:
     st.success(t["success"])
