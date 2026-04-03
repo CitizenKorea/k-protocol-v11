@@ -4,6 +4,9 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="K-PROTOCOL Master Localization", layout="wide", initial_sidebar_state="collapsed")
 
+# ==========================================
+# 1. 다국어 텍스트 설정
+# ==========================================
 lang_dict = {
     "English": {
         "title": "🔭 K-PROTOCOL: Deterministic Cosmic Localization",
@@ -18,6 +21,7 @@ lang_dict = {
         "target1_text": "✨ NGC 4993 (Absolute Coordinate)",
         "target2_text": "✨ GW150914 (Absolute Coordinate)",
         "xaxis": "Calibration Progress", "yaxis": "Time Residual (Log10 ms)",
+        "xaxis_3d": "X-axis (Log Scale)", "yaxis_3d": "Y-axis (Log Scale)", "zaxis_3d": "Z-axis (Log Scale)",
         "guide_title": "### 📖 In-Depth Scientific Guide: The Restoration of Deterministic Geometry",
         "guide_0": "**1. [ 0% ] The Fallacy of the SI Constant (The Geometric Illusion)**<br>Modern astrophysics relies on the SI constant ($c$), calibrated within Earth's average gravity. At 0%, you are viewing the universe through this 'bent ruler'. The mathematical residuals are large, creating a massive 'Probability Arc' (red cloud) of uncertainty.",
         "guide_50": "**2. [ 0% ➔ 99% ] The K-PROTOCOL Calibration (Changing the Lens)**<br>As you move the slider, the code is mathematically stripping away Earth's localized gravitational distortion ($S_{loc}$) and replacing it with the Absolute Kinematic Speed of Light ($c_k$). The TDOA (Time Difference of Arrival) equations dynamically minimize their residuals, collapsing the cloud.",
@@ -37,6 +41,7 @@ lang_dict = {
         "target1_text": "✨ NGC 4993 (우주 절대좌표)",
         "target2_text": "✨ GW150914 (우주 절대좌표)",
         "xaxis": "K-PROTOCOL 적용률", "yaxis": "도달 시간 오차 (Log10 ms)",
+        "xaxis_3d": "X축 (Log 압축 공간)", "yaxis_3d": "Y축 (Log 압축 공간)", "zaxis_3d": "Z축 (Log 압축 공간)",
         "guide_title": "### 📖 학술 상세 가이드: 결정론적 기하학의 복원과 절대성의 증명",
         "guide_0": "**1. [ 0% ] SI 단위계의 기하학적 왜곡 (착시 현상의 실태)**<br>현대 천체물리학은 지구 평균 중력에 오염된 SI 광속 상수($c$)를 '우주의 절대 잣대'로 오인하여 사용합니다. 0% 상태에서는 TDOA(도달 시간 차이) 방정식의 수학적 잔차(Residual)가 커져, 거대한 '확률의 붉은 안개(Arc)'가 발생합니다.",
         "guide_50": "**2. [ 0% ➔ 99% ] K-PROTOCOL 보정 메커니즘 (절대 시공간으로의 전환)**<br>슬라이더를 움직이면, 물리 엔진이 실시간으로 국소적 중력 렌즈($S_{loc}$)를 걷어내고 우주의 절대 광속($c_k$)을 수식에 대입합니다. 우측 2D 그래프에서 마이크로초 단위의 도달 시간 잔차가 오차 '0'을 향해 수직 낙하하며, 안개가 맹렬하게 한 점을 향해 수축(Collapse)합니다.",
@@ -57,26 +62,21 @@ st.markdown("---")
 # ==========================================
 # 2. 물리 및 기하학 코어 (Real Math Engine)
 # ==========================================
-# 실제 지구 중심 좌표 (ECEF, 미터 단위) - 논문 데이터 적용
 V1_coord = np.array([4546374.1, 842989.7, 4378576.9])
 L1_coord = np.array([-74276.0, -5496283.7, 3224257.0])
 H1_coord = np.array([-2161414.9, -3834695.2, 4600350.2])
 
-# 베이스라인 벡터 (V1 기준)
 vec_VL = V1_coord - L1_coord
 vec_VH = V1_coord - H1_coord
 
-# K-PROTOCOL 상수
 c_SI = 299792458.0
 c_K = 297880197.6
 
-# 논문 기반 도착 시간 데이터 (초)
 t_L_SI = 0.022170549
 t_H_SI = 0.025158686
 t_L_K = 0.022141220
 t_H_K = 0.025160489
 
-# Case 2를 위한 가상 분리 데이터 (시각적 분리용)
 t_L_K_2, t_H_K_2 = -0.015000000, 0.021000000
 t_L_SI_2, t_H_SI_2 = t_L_K_2 * 0.998, t_H_K_2 * 1.002
 
@@ -87,7 +87,6 @@ T_actual_paper = {"L1": 22.170549, "H1": 25.158686}
 
 @st.cache_data
 def get_sky_grid(n=5000):
-    # 피보나치 구면(Fibonacci Sphere)으로 3D 공간을 균일하게 탐색하는 수학적 그리드 생성
     phi = np.pi * (3. - np.sqrt(5.))
     y = 1 - (np.arange(n) / float(n - 1)) * 2
     radius = np.sqrt(1 - y * y)
@@ -108,22 +107,18 @@ def mathematical_localization(prog, is_case1):
         t_L_k, t_H_k = t_L_K_2, t_H_K_2
         threshold_scale = 400000
 
-    # 보정된 광속 및 관측 도달 시간 산출
     v = c_SI + prog * (c_K - c_SI)
     d_L = (t_L_si + prog * (t_L_k - t_L_si)) * v
     d_H = (t_H_si + prog * (t_H_k - t_H_si)) * v
 
-    # 5000개 전 우주(그리드) 좌표에 대한 예상 지연 거리 내적(Dot Product) 계산
     exp_L = np.dot(sky_grid, vec_VL)
     exp_H = np.dot(sky_grid, vec_VH)
 
-    # 💡 핵심 물리 연산: 절대 기하학 잔차(Residual) 도출
     res = np.abs(exp_L - d_L) + np.abs(exp_H - d_H)
 
     min_res = np.min(res)
     best_vec = sky_grid[np.argmin(res)]
 
-    # 남은 잔차에 따른 불확실성 영역(Probability Arc) 계산
     threshold = min_res + threshold_scale * (1.05 - prog)
     arc_points = sky_grid[res < threshold]
 
@@ -134,10 +129,8 @@ def render_case(header, slider_label, is_case1, key_suffix):
     prog = st.slider(slider_label, 0.0, 1.0, 0.0, 0.01, key=f"slider_{key_suffix}")
     c1, c2 = st.columns([1.5, 1])
     
-    # 수학적 TDOA 엔진 연산 실행
     best_vec, arc_points = mathematical_localization(prog, is_case1)
     
-    # 스케일 변환 (화면 렌더링용)
     scale = 1e6
     pos_V1 = V1_coord / scale
     pos_L1 = L1_coord / scale
@@ -151,28 +144,59 @@ def render_case(header, slider_label, is_case1, key_suffix):
 
     with c1:
         fig3d = go.Figure()
+        
+        # 지구를 상징하는 옅은 구체 메쉬
         u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:30j]
         fig3d.add_trace(go.Surface(x=R_line*np.cos(u)*np.sin(v), y=R_line*np.sin(u)*np.sin(v), z=R_line*np.cos(v), colorscale='Blues', opacity=0.05, showscale=False, hoverinfo='skip'))
         
-        # 최적 좌표 벡터 라인 렌더링
+        # 💡 [핵심 수정] 로그 스케일로 압축된 우주 공간의 단일 타겟 지점 생성
+        visual_target = best_vec * R_line * 2.0  
+
         for k in ["L1", "H1", "V1"]:
-            end = starts[k] + best_vec * R_line
+            # 평행선이 아닌, 압축된 공간의 특이점(visual_target)을 향해 3개의 선이 집중됨
+            end = visual_target
             dash_style = 'dash' if k == "L1" else 'solid'
             line_width = 2 if k == "H1" else 4
             fig3d.add_trace(go.Scatter3d(x=[starts[k][0], end[0]], y=[starts[k][1], end[1]], z=[starts[k][2], end[2]], mode='lines', line=dict(color=colors[k], width=line_width, dash=dash_style), name=names[k]))
 
-        # 잔차 임계값에 기반한 확률의 붉은 호(Arc) 렌더링
         if prog < 1.0:
-            arc_cloud = pos_V1 + arc_points * R_line
+            # 붉은 확률 안개도 로그 스케일 타겟 위치에 맞춰 변환
+            arc_cloud = arc_points * R_line * 2.0 
             fig3d.add_trace(go.Scatter3d(x=arc_cloud[:,0], y=arc_cloud[:,1], z=arc_cloud[:,2], mode='markers', marker=dict(size=3, color='red', opacity=0.4), name=t["arc_name"]))
 
         if prog == 1.0:
             lbl = t["target1_text"] if is_case1 else t["target2_text"]
-            end_lbl = pos_V1 + best_vec * R_line
-            fig3d.add_trace(go.Scatter3d(x=[end_lbl[0]], y=[end_lbl[1]], z=[end_lbl[2]], mode='text+markers', marker=dict(size=5, color='yellow'), text=[lbl], textposition="top center", textfont=dict(color='black', size=13, family="Arial Black"), showlegend=False))
+            fig3d.add_trace(go.Scatter3d(x=[visual_target[0]], y=[visual_target[1]], z=[visual_target[2]], mode='text+markers', marker=dict(size=6, color='yellow', symbol='diamond'), text=[lbl], textposition="top center", textfont=dict(color='white', size=13, family="Arial Black"), showlegend=False))
+
+        # 💡 [핵심 추가] 멋진 로그 스케일 3D 축 (Axis) 설정
+        axis_template = dict(
+            showbackground=False, 
+            showgrid=True,        # 그리드 선 켜기
+            zeroline=True,        # 정중앙 (0,0,0)을 관통하는 중심선 켜기
+            showline=True, 
+            gridcolor='rgba(255, 255, 255, 0.15)', # 우주적인 느낌의 반투명 격자
+            zerolinecolor='rgba(255, 255, 255, 0.4)', 
+            zerolinewidth=2,
+            tickfont=dict(color='rgba(255, 255, 255, 0.5)', size=10),
+            titlefont=dict(color='cyan', size=12, family="Arial Black") # 사이버틱한 청록색 타이틀
+        )
 
         camera_eye = dict(x=1.3, y=-1.5, z=0.8) if is_case1 else dict(x=0.7, y=-0.8, z=0.5)
-        fig3d.update_layout(scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='rgba(0,0,0,0)', camera=dict(eye=camera_eye)), margin=dict(l=0,r=0,b=0,t=0), height=450, paper_bgcolor='rgba(0,0,0,0)', legend=dict(x=0.0, y=1.0, bgcolor="rgba(255, 255, 255, 0.7)", font=dict(size=11)))
+        
+        # 3D Scene 레이아웃 업데이트 (X, Y, Z축 표시 및 라벨링)
+        fig3d.update_layout(
+            scene=dict(
+                xaxis=dict(**axis_template, title=t["xaxis_3d"]),
+                yaxis=dict(**axis_template, title=t["yaxis_3d"]),
+                zaxis=dict(**axis_template, title=t["zaxis_3d"]),
+                bgcolor='rgba(0,0,0,0)', 
+                camera=dict(eye=camera_eye)
+            ), 
+            margin=dict(l=0,r=0,b=0,t=0), 
+            height=450, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            legend=dict(x=0.0, y=1.0, bgcolor="rgba(0, 0, 0, 0.5)", font=dict(color="white", size=11))
+        )
         st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{key_suffix}")
 
     with c2:
@@ -180,7 +204,6 @@ def render_case(header, slider_label, is_case1, key_suffix):
         x_vals = np.linspace(0, max(prog, 0.01), 50)
         fig2d = go.Figure()
 
-        # 논문에 명시된 Master Calibration Ratio의 2D 잔차 그래프
         log_errors_L, log_errors_H = [], []
         for x in x_vals:
             cur_S_L = S_earth + (S_loc["L1"] - S_earth) * x
@@ -194,7 +217,7 @@ def render_case(header, slider_label, is_case1, key_suffix):
         fig2d.add_trace(go.Scatter(x=x_vals, y=log_errors_L, mode='lines', name=names["L1"], line=dict(color=color_L1, width=3, dash='dash')))
         fig2d.add_trace(go.Scatter(x=x_vals, y=log_errors_H, mode='lines', name=names["H1"], line=dict(color=color_H1, width=2, dash='solid')))
         
-        fig2d.update_layout(xaxis_title=t["xaxis"], yaxis_title=t["yaxis"], template="plotly_white", height=400, xaxis=dict(range=[0, 1]), yaxis=dict(range=[-12, 1]), margin=dict(l=10, r=10, b=10, t=10), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig2d.update_layout(xaxis_title=t["xaxis"], yaxis_title=t["yaxis"], template="plotly_dark", height=400, xaxis=dict(range=[0, 1]), yaxis=dict(range=[-12, 1]), margin=dict(l=10, r=10, b=10, t=10), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig2d, use_container_width=True, key=f"2d_plot_{key_suffix}")
     
     return prog
