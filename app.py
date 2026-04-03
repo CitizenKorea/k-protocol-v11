@@ -145,9 +145,36 @@ def render_case(header, slider_label, is_case1, key_suffix):
     with c1:
         fig3d = go.Figure()
         
-        # 지구를 상징하는 옅은 구체 메쉬
-        u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:30j]
-        fig3d.add_trace(go.Surface(x=R_line*np.cos(u)*np.sin(v), y=R_line*np.sin(u)*np.sin(v), z=R_line*np.cos(v), colorscale='Blues', opacity=0.05, showscale=False, hoverinfo='skip'))
+       # 💡 [핵심 추가] 멋진 로그 스케일 3D 축 (Axis) 설정 (Plotly 최신 문법 적용)
+        axis_template = dict(
+            showbackground=False, 
+            showgrid=True,        
+            zeroline=True,        
+            showline=True, 
+            gridcolor='rgba(255, 255, 255, 0.15)', 
+            zerolinecolor='rgba(255, 255, 255, 0.4)', 
+            zerolinewidth=2,
+            tickfont=dict(color='rgba(255, 255, 255, 0.5)', size=10)
+            # 에러의 원인이었던 titlefont는 삭제하고 아래로 뺐습니다.
+        )
+
+        camera_eye = dict(x=1.3, y=-1.5, z=0.8) if is_case1 else dict(x=0.7, y=-0.8, z=0.5)
+        
+        # 3D Scene 레이아웃 업데이트 (X, Y, Z축 표시 및 라벨링 최신화)
+        fig3d.update_layout(
+            scene=dict(
+                xaxis=dict(**axis_template, title=dict(text=t["xaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
+                yaxis=dict(**axis_template, title=dict(text=t["yaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
+                zaxis=dict(**axis_template, title=dict(text=t["zaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
+                bgcolor='rgba(0,0,0,0)', 
+                camera=dict(eye=camera_eye)
+            ), 
+            margin=dict(l=0,r=0,b=0,t=0), 
+            height=450, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            legend=dict(x=0.0, y=1.0, bgcolor="rgba(0, 0, 0, 0.5)", font=dict(color="white", size=11))
+        )
+        st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{key_suffix}")
         
         # 💡 [핵심 수정] 로그 스케일로 압축된 우주 공간의 단일 타겟 지점 생성
         visual_target = best_vec * R_line * 2.0  
