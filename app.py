@@ -145,7 +145,28 @@ def render_case(header, slider_label, is_case1, key_suffix):
     with c1:
         fig3d = go.Figure()
         
-       # 💡 [핵심 추가] 멋진 로그 스케일 3D 축 (Axis) 설정 (Plotly 최신 문법 적용)
+        # 지구를 상징하는 옅은 구체 메쉬
+        u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:30j]
+        fig3d.add_trace(go.Surface(x=R_line*np.cos(u)*np.sin(v), y=R_line*np.sin(u)*np.sin(v), z=R_line*np.cos(v), colorscale='Blues', opacity=0.05, showscale=False, hoverinfo='skip'))
+        
+        # 로그 스케일로 압축된 우주 공간의 단일 타겟 지점 생성
+        visual_target = best_vec * R_line * 2.0  
+
+        for k in ["L1", "H1", "V1"]:
+            end = visual_target
+            dash_style = 'dash' if k == "L1" else 'solid'
+            line_width = 2 if k == "H1" else 4
+            fig3d.add_trace(go.Scatter3d(x=[starts[k][0], end[0]], y=[starts[k][1], end[1]], z=[starts[k][2], end[2]], mode='lines', line=dict(color=colors[k], width=line_width, dash=dash_style), name=names[k]))
+
+        if prog < 1.0:
+            arc_cloud = arc_points * R_line * 2.0 
+            fig3d.add_trace(go.Scatter3d(x=arc_cloud[:,0], y=arc_cloud[:,1], z=arc_cloud[:,2], mode='markers', marker=dict(size=3, color='red', opacity=0.4), name=t["arc_name"]))
+
+        if prog == 1.0:
+            lbl = t["target1_text"] if is_case1 else t["target2_text"]
+            fig3d.add_trace(go.Scatter3d(x=[visual_target[0]], y=[visual_target[1]], z=[visual_target[2]], mode='text+markers', marker=dict(size=6, color='yellow', symbol='diamond'), text=[lbl], textposition="top center", textfont=dict(color='white', size=13, family="Arial Black"), showlegend=False))
+
+        # 에러를 수정한 최신 Plotly 문법의 3D 축 (Axis) 설정
         axis_template = dict(
             showbackground=False, 
             showgrid=True,        
@@ -155,67 +176,16 @@ def render_case(header, slider_label, is_case1, key_suffix):
             zerolinecolor='rgba(255, 255, 255, 0.4)', 
             zerolinewidth=2,
             tickfont=dict(color='rgba(255, 255, 255, 0.5)', size=10)
-            # 에러의 원인이었던 titlefont는 삭제하고 아래로 뺐습니다.
         )
 
         camera_eye = dict(x=1.3, y=-1.5, z=0.8) if is_case1 else dict(x=0.7, y=-0.8, z=0.5)
         
-        # 3D Scene 레이아웃 업데이트 (X, Y, Z축 표시 및 라벨링 최신화)
+        # 3D Scene 레이아웃 업데이트 (최신 딕셔너리 포맷 적용)
         fig3d.update_layout(
             scene=dict(
                 xaxis=dict(**axis_template, title=dict(text=t["xaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
                 yaxis=dict(**axis_template, title=dict(text=t["yaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
                 zaxis=dict(**axis_template, title=dict(text=t["zaxis_3d"], font=dict(color='cyan', size=12, family="Arial Black"))),
-                bgcolor='rgba(0,0,0,0)', 
-                camera=dict(eye=camera_eye)
-            ), 
-            margin=dict(l=0,r=0,b=0,t=0), 
-            height=450, 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            legend=dict(x=0.0, y=1.0, bgcolor="rgba(0, 0, 0, 0.5)", font=dict(color="white", size=11))
-        )
-        st.plotly_chart(fig3d, use_container_width=True, key=f"3d_plot_{key_suffix}")
-        
-        # 💡 [핵심 수정] 로그 스케일로 압축된 우주 공간의 단일 타겟 지점 생성
-        visual_target = best_vec * R_line * 2.0  
-
-        for k in ["L1", "H1", "V1"]:
-            # 평행선이 아닌, 압축된 공간의 특이점(visual_target)을 향해 3개의 선이 집중됨
-            end = visual_target
-            dash_style = 'dash' if k == "L1" else 'solid'
-            line_width = 2 if k == "H1" else 4
-            fig3d.add_trace(go.Scatter3d(x=[starts[k][0], end[0]], y=[starts[k][1], end[1]], z=[starts[k][2], end[2]], mode='lines', line=dict(color=colors[k], width=line_width, dash=dash_style), name=names[k]))
-
-        if prog < 1.0:
-            # 붉은 확률 안개도 로그 스케일 타겟 위치에 맞춰 변환
-            arc_cloud = arc_points * R_line * 2.0 
-            fig3d.add_trace(go.Scatter3d(x=arc_cloud[:,0], y=arc_cloud[:,1], z=arc_cloud[:,2], mode='markers', marker=dict(size=3, color='red', opacity=0.4), name=t["arc_name"]))
-
-        if prog == 1.0:
-            lbl = t["target1_text"] if is_case1 else t["target2_text"]
-            fig3d.add_trace(go.Scatter3d(x=[visual_target[0]], y=[visual_target[1]], z=[visual_target[2]], mode='text+markers', marker=dict(size=6, color='yellow', symbol='diamond'), text=[lbl], textposition="top center", textfont=dict(color='white', size=13, family="Arial Black"), showlegend=False))
-
-        # 💡 [핵심 추가] 멋진 로그 스케일 3D 축 (Axis) 설정
-        axis_template = dict(
-            showbackground=False, 
-            showgrid=True,        # 그리드 선 켜기
-            zeroline=True,        # 정중앙 (0,0,0)을 관통하는 중심선 켜기
-            showline=True, 
-            gridcolor='rgba(255, 255, 255, 0.15)', # 우주적인 느낌의 반투명 격자
-            zerolinecolor='rgba(255, 255, 255, 0.4)', 
-            zerolinewidth=2,
-            tickfont=dict(color='rgba(255, 255, 255, 0.5)', size=10),
-            titlefont=dict(color='cyan', size=12, family="Arial Black") # 사이버틱한 청록색 타이틀
-        )
-
-        camera_eye = dict(x=1.3, y=-1.5, z=0.8) if is_case1 else dict(x=0.7, y=-0.8, z=0.5)
-        
-        # 3D Scene 레이아웃 업데이트 (X, Y, Z축 표시 및 라벨링)
-        fig3d.update_layout(
-            scene=dict(
-                xaxis=dict(**axis_template, title=t["xaxis_3d"]),
-                yaxis=dict(**axis_template, title=t["yaxis_3d"]),
-                zaxis=dict(**axis_template, title=t["zaxis_3d"]),
                 bgcolor='rgba(0,0,0,0)', 
                 camera=dict(eye=camera_eye)
             ), 
